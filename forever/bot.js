@@ -24,7 +24,7 @@ const TIMEOUT_IPC_STATE = 90000;
 // Time to wait for steam to be "ready"
 const TIMEOUT_STEAM_RUNNING = 90000;
 // Maximum amount of concurrently starting bots
-const MAX_CONURRENT_BOTS = 3;
+const MAX_CONURRENT_BOTS = 1;
 // Time to delay individual bot starts by to prevent IPC ID conflicts
 const DELAY_START_TIME = 1000;
 
