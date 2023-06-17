@@ -1,4 +1,4 @@
-const CathookConsole = require('./cpanel');
+const CathookConsole = require('./cathook');
 const express = require('express');
 const bodyparser = require('body-parser');
 const path = require('path');
@@ -14,6 +14,7 @@ try {
     pid.removeOnExit();
 }
 catch (error) {
+    console.log(`Webpanel already running?`);
     process.exit(1);
 }
 
@@ -27,7 +28,7 @@ app.use(session({
     saveUninitialized: false
 }))
 
-app.use(express.static(path.join(__dirname, "wpanel")));
+app.use(express.static(path.join(__dirname, "public")));
 app.use(bodyparser.json());
 app.use(bodyparser.urlencoded({ extended: true }));
 
@@ -52,6 +53,7 @@ app.post('/api/direct/:command', function (req, res) {
 });
 
 var server = app.listen(PORT, function () {
+    console.log("Listening on port", PORT);
 });
 // For some reason nodejs thinks keep-alive connections should keep the http server alive. What the fuck.
 stoppable(server, 0);
