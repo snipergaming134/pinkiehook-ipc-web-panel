@@ -174,6 +174,11 @@ function updateIPCData(row, id, data) {
 	row.find('.client-id').text(id);
 	row.find('.client-name').text(data.name);
 	row.find('.client-total').text(data.accumulated.score);
+	var hitrate = Math.floor((data.accumulated.shots ? data.accumulated.hits / data.accumulated.shots : 0) * 100);
+	var hsrate = Math.floor((data.accumulated.hits ? data.accumulated.headshots / data.accumulated.hits : 0) * 100);
+	row.find('.client-shots').text(data.accumulated.shots);
+	row.find('.client-hitrate').text(hitrate + '%');
+	row.find('.client-hsrate').text(hsrate + '%');
 	if (data.connected) {
 		row.toggleClass('disconnected', false);
 		row.find('.client-uptime-server').text(format(Date.now() - data.ts_connected * 1000));
@@ -237,6 +242,9 @@ function addClientRow(botid) {
     row.append($('<td></td>').attr('class', 'client-uptime-queue active').text('N/A'));
     row.append($('<td></td>').attr('class', 'client-total active').text('N/A'));
     row.append($('<td></td>').attr('class', 'client-score connected active').text('N/A'));
+    row.append($('<td></td>').attr('class', 'client-shots active').text('N/A'));
+    row.append($('<td></td>').attr('class', 'client-hitrate active').text('N/A'));
+    row.append($('<td></td>').attr('class', 'client-hsrate active').text('N/A'));
     row.append($('<td></td>').attr('class', 'client-uptime-server connected active').text('N/A'));
     row.append($('<td></td>').attr('class', 'client-alive connected active').text('N/A'));
     row.append($('<td></td>').attr('class', 'client-team connected active').text('N/A'));
