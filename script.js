@@ -237,7 +237,6 @@ function addClientRow(botid) {
     row.append($('<td></td>').attr('class', 'client-uptime-queue active').text('N/A'));
     row.append($('<td></td>').attr('class', 'client-total active').text('N/A'));
     row.append($('<td></td>').attr('class', 'client-score connected active').text('N/A'));
-    row.append($('<td></td>').attr('class', 'client-hsrate active').text('N/A'));
     row.append($('<td></td>').attr('class', 'client-uptime-server connected active').text('N/A'));
     row.append($('<td></td>').attr('class', 'client-alive connected active').text('N/A'));
     row.append($('<td></td>').attr('class', 'client-team connected active').text('N/A'));
