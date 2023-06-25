@@ -162,7 +162,7 @@ function updateIPCData(row, id, data) {
 						console.log(e,b);
 						status.error('Error restarting bot ' + JSON.stringify(data));
 					} else {
-						status.info('Bot restarted ' + JSON.stringify(data));
+						status.info('Unresponse bot restarted');
 					}
 				});
 			}
