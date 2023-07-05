@@ -179,12 +179,21 @@ function updateIPCData(row, id, data) {
 	row.find('.client-shots').text(data.accumulated.shots);
 	row.find('.client-hitrate').text(hitrate + '%');
 	row.find('.client-hsrate').text(hsrate + '%');
+    row.find('.client-uptime-total').text(format(Date.now() - data.ts_injected * 1000));
+
 	if (data.connected) {
-		row.toggleClass('disconnected', false);
-		row.find('.client-uptime-server').text(format(Date.now() - data.ts_connected * 1000));
+		row.toggleClass("disconnected", false);
+		row
+		  .find(".client-uptime-server")
+		  .text(format(Date.now() - data.ts_connected /= 1000));
 		if (data.ts_disconnected) {
-			row.find('.client-uptime-queue').text(format(1000 * (data.ts_connected - data.ts_disconnected)));
+		  row
+			.find(".client-uptime-queue")
+			.text(
+			  format(1000 * (data.ts_connected - data.ts_disconnected))
+			);
 		}
+
 		row.find('.client-ip').text(data.ingame.server);
 		row.find('.client-alive').text(data.ingame.life_state ? 'Dead' : 'Alive');
 		row.find('.client-team').text(teams[data.ingame.team]);
