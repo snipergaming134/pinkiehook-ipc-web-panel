@@ -210,6 +210,7 @@ function updateUserData(bot, data) {
     }
     updateIPCData(row, data.ipcID, data.ipc);
 }
+
 function addClientRow(botid) {
     var row = $('<tr></tr>').attr('data-id', botid).addClass('disconnected stopped');
     var actions = $('<td></td>').attr('class', 'client-actions');
