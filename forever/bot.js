@@ -24,7 +24,7 @@ const TIMEOUT_IPC_STATE = 90000;
 // Time to wait for steam to be "ready"
 const TIMEOUT_STEAM_RUNNING = 90000;
 // Maximum amount of concurrently starting bots
-const MAX_CONCURRENT_BOTS = 3;
+const MAX_CONURRENT_BOTS = 1;
 // Time to delay individual bot starts by to prevent IPC ID conflicts
 const DELAY_START_TIME = 1000;
 
@@ -36,12 +36,12 @@ const STATE = {
     RUNNING: 5,
     RESTARTING: 6,
     STOPPING: 7,
-    NO_ACCOUNT: 8
+    NO_ACCOUNT: 8,
 }
 
 function makeid(length) {
     var result = '';
-    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxy!_2$!^%z0123456789';
     var charactersLength = characters.length;
     for (var i = 0; i < length; i++) {
         result += characters.charAt(Math.floor(Math.random() * charactersLength));
@@ -61,6 +61,7 @@ function clearSourceLockFiles() {
 }
 
 if (!process.env.SUDO_USER) {
+    console.error('[ERROR] Could not find $SUDO_USER');
     process.exit(1);
 }
 
@@ -71,6 +72,7 @@ try {
     USER.SUPPORTS_FJ_NET = false;
 }
 
+console.log('Main user name: ' + USER.name);
 
 class Bot extends EventEmitter {
     constructor(botid) {
@@ -89,6 +91,8 @@ class Bot extends EventEmitter {
         this.stopped = false;
         this.account = null;
         this.restarts = 0;
+
+        this.log(`Initializing, folder = ${self.name}`);
 
         this.procFirejailSteam = null;
         this.procFirejailGame = null;
@@ -117,18 +121,21 @@ class Bot extends EventEmitter {
         }
 
         this.on('ipc-data', function (obj) {
-            if (self.state !== STATE.RUNNING && self.state !== STATE.WAITING)
+            if (self.state != STATE.RUNNING && self.state != STATE.WAITING)
                 return;
             var id = obj.id;
             var data = obj.data;
 
             // There is no point in storing the same ipc data again. Removing this will actually cause IPC data to be set while the bot is not running.
             // This is only really a problem between tf2 crash/exit and IPC server auto removal
-            if (data.heatbeat === self.ipcLastHeartbeat)
+            if (data.heatbeat == self.ipcLastHeartbeat)
                 return;
             self.ipcLastHeartbeat = data.heartbeat;
 
             self.ipcID = id;
+            if (!self.ipcState) {
+                self.log(`Assigned IPC ID ${id}`);
+            }
             self.ipcState = data;
         });
 
@@ -156,7 +163,7 @@ class Bot extends EventEmitter {
     }
 
     setupSteamapps() {
-        // I'm scared of doing recursive deletes in Node.js
+        // I'm scared of doing recursive deletes in nodejs
         fs.renameSync(this.steamApps, path.resolve(this.steamApps, '..', 'steamapps_old'));
         fs.symlinkSync("/opt/steamapps/", this.steamApps);
         return true;
@@ -165,6 +172,7 @@ class Bot extends EventEmitter {
     spawnSteam() {
         var self = this;
         if (self.procFirejailSteam) {
+            self.log('[ERROR] Steam is already running!');
             return;
         }
 
@@ -173,6 +181,11 @@ class Bot extends EventEmitter {
             fs.chownSync(self.home, USER.uid, USER.uid);
         }
 
+        /*if (!fs.existsSync(self.steamApps)) {
+            fs.mkdirSync(path.join(self.steamApps, ".."), { recursive: true });
+            fs.symlinkSync("/opt/steamapps/", self.steamApps);
+            chownr.sync(self.steamPath, USER.uid, USER.uid);
+        }*/
         var steambin = this.nativeSteam ? "steam-native" : "steam";
 
         self.procFirejailSteam = child_process.spawn(([this.shouldResetSteam, this.shouldResetSteam = 0][0] ? LAUNCH_OPTIONS_STEAM_RESET : LAUNCH_OPTIONS_STEAM)
@@ -184,13 +197,12 @@ class Bot extends EventEmitter {
             .replace("%JAILNAME%", self.name)
             // LD_PRELOAD, "just disable vac"
             .replace("%LD_PRELOAD%", `"${process.env.STEAM_LD_PRELOAD}"`)
-            // Xorg display
+            // XOrg Display
             .replace("%DISPLAY%", process.env.DISPLAY)
             // Network
             .replace("%NETWORK%", USER.SUPPORTS_FJ_NET ? `--net=${USER.interface}` : `--netns=catbotns${this.botid}`)
             // Home folder
             .replace("%HOME%", self.home)
-            // Steam folder
             .replace("%STEAM%", steambin),
             self.spawnOptions);
         self.logSteam = fs.createWriteStream('./logs/' + self.name + '.steam.log');
@@ -202,7 +214,7 @@ class Bot extends EventEmitter {
 
         function processErrorLogs(text) {
             if (text.includes("System startup time:")) {
-                // Dynamically determine the correct paths, this supports debian, etc.
+                // Dynamically determine the corrrect paths, this supports debian, etc
                 var steam_apps = path.join(steam_path, "steamapps");
                 self.steamPath = path.resolve(this.home, path.relative(USER.home, fs.realpathSync(steam_path)));
                 self.steamApps = path.resolve(this.home, path.relative(USER.home, fs.realpathSync(steam_apps)));
@@ -240,11 +252,13 @@ class Bot extends EventEmitter {
 
         // FUCK YOU DEBIAN AND EVERYTHING YOU DO
         // FUCK YOU UBUNTU AND EVERYTHING YOU DO
-        // WHY THE FUCK DO YOU NEED TO DO YOUR OWN THING EVERY TIME INSTEAD OF STICKING WITH THE FUCKING STANDARDS/DEFAULTS
+        // WHY THE FUCK DO YOU NEED TO DO YOUR OWN THING EVERY TIME INSTEAD OF STICKING WITH THE FUCKKING STANDARDS/DEFAULTS
 
-        // WHY THE FUCK DO YOU RESTRICT NETWORK FUNCTIONS FOR NON PRIVILEGED FIREJAIL AND DIVERGING FROM THE DEFAULTS?
+        // WHY THE FUCK DO YOU RESTRICT NETWORK FUNCTIONS FOR NON PRIVILEDGED FIREJAIL AND DIVERGING FROM THE DEFAULTS?
         // WHY THE FUCK DO YOU INSIST ON FORWARDING THE STEAM ERROR LOGS (THE ONLY USEFUL LOGS) TO A RANDOM ASS FILE FOR NO REASON?
         var isDebian = !fs.existsSync("/usr/bin/steam") && fs.existsSync("/usr/games/steam");
+
+
         self.procFirejailSteam.stderr.on("data", (data) => {
             var text = data.toString();
             processErrorLogs.bind(this)(text);
@@ -294,9 +308,8 @@ class Bot extends EventEmitter {
             .replace("%JAILNAME%", self.name)
             // Cathook
             .replace("%LD_PRELOAD%", `"${filename}:${process.env.STEAM_LD_PRELOAD}"`)
-            // Xorg display
+            // XORG display
             .replace("%DISPLAY%", process.env.DISPLAY)
-            // Steam runtime
             .replace("%STEAM_RUNTIME%", path.relative(self.home, path.join(self.steamPath, "/ubuntu12_32/steam-runtime/run.sh"))),
             [], self.spawnOptions);
         self.logGame = fs.createWriteStream('./logs/' + self.name + '.game.log');
@@ -338,6 +351,7 @@ class Bot extends EventEmitter {
 
     killSteam() {
         this.log('Killing steam');
+        // Firejail will handle smooth termination
         if (this.procFirejailSteam)
             this.procFirejailSteam.kill("SIGINT");
     }
@@ -380,6 +394,7 @@ class Bot extends EventEmitter {
                         this.shouldRestart = true;
                         this.time_steamWorking = 0;
                     }
+                    return;
                 }
                 else {
                     if (!this.procFirejailGame) {
@@ -425,7 +440,7 @@ class Bot extends EventEmitter {
                         this.log('Preparing to restart with new account...');
                         this.account = accounts.get(this.botid);
                     }
-                    if (this.account && module.exports.currentlyStartingGames < MAX_CONCURRENT_BOTS && module.exports.lastStartTime + DELAY_START_TIME < time) {
+                    if (this.account && module.exports.currentlyStartingGames < MAX_CONURRENT_BOTS && module.exports.lastStartTime + DELAY_START_TIME < time) {
                         module.exports.lastStartTime = time;
                         module.exports.currentlyStartingGames++;
                         this.state = STATE.STARTING;
