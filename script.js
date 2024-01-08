@@ -191,6 +191,7 @@ function updateIPCData(row, id, data) {
 		row.find('.client-class').text(classes[data.ingame.role]);
 		row.find('.client-score').text(data.ingame.score);
 		row.find('.client-health').text(data.ingame.health + '/' + data.ingame.health_max);
+		row.find('.client-ping').text(data.ingame.ping);
         row.find('.client-map').text(data.ingame.mapname);
         row.find('.client-players').text(data.ingame.player_count);
         row.find('.client-bots').text(data.ingame.bot_count);
@@ -249,6 +250,7 @@ function addClientRow(botid) {
     row.append($('<td></td>').attr('class', 'client-alive connected active').text('N/A'));
     row.append($('<td></td>').attr('class', 'client-team connected active').text('N/A'));
     row.append($('<td></td>').attr('class', 'client-class connected active').text('N/A'));
+	row.append($('<td></td>').attr('class', 'client-ping connected active').text('NYI'));
     row.append($('<td></td>').attr('class', 'client-health connected active').text('N/A'));
     row.append($('<td></td>').attr('class', 'client-ip connected active').text('N/A'));
     row.append($('<td></td>').attr('class', 'client-map connected active').text('NYI'));
